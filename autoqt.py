@@ -4,19 +4,35 @@ from functools import partial
 from PyQt5.QtCore import QObject, pyqtProperty
 
 
-VERSION = '0.0.3'
+VERSION = '0.0.4'
+
+
+def getdeepr(obj, name):
+    """Function to get deeper attributes, replaces getattr."""
+    names = name.split('.')
+    for name in names[:-1]:
+        obj = getattr(obj, name)
+    return getattr(obj, names[-1])
+
+
+def setdeepr(obj, name, value):
+    """Function to set deeper attributes, replaces setattr."""
+    names = name.split('.')
+    for name in names[:-1]:
+        obj = getattr(obj, name)
+    return setattr(obj, names[-1], value)
 
 
 def _getter(self, attr):
     """Template for AutoProp fget function."""
-    return getattr(self, attr)
+    return getdeepr(self, attr)
 
 
 def _setter(self, value, attr, signal):
     """Template for AutoProp fset function."""
-    if getattr(self, attr) != value:
-        setattr(self, attr, value)
-        getattr(self, signal).emit()
+    if getdeepr(self, attr) != value:
+        setdeepr(self, attr, value)
+        getdeepr(self, signal).emit()
 
 
 class AutoProp:
@@ -29,8 +45,13 @@ class AutoProp:
 
     You can use the @propName.getter and setter decorators just like you would
     with a Python or PyQt property to customize them if you need to.
+
+    The attr argument can also contain a kind of 'object path' with
+    levels/layers separated by dots. For example: attr='thing.other.stuff'
+    will getattr down through the 'thing' and 'other' objects to return the
+    value of 'stuff'.
     """
-    def __init__(self, type_signature, signal_name, attr, write=False):
+    def __init__(self, type_signature, signal_name, attr=None, write=False):
         self.type_signature = type_signature
         self.signal_name = signal_name
         self.attr = attr
@@ -59,14 +80,14 @@ class AutoObject(QObject):
         # transform AutoProp instances into pyqtProperties
         for attr in dir(cls):
             try:
-                prop = getattr(cls, attr)
+                prop = getdeepr(cls, attr)
             except AttributeError:
                 continue
             if not isinstance(prop, AutoProp):
                 continue
             prop_kwargs = {
-                'notify': getattr(cls, prop.signal_name),
-                'fget': prop.fget,
+                'notify': getdeepr(cls, prop.signal_name),
+                'fget': prop.fget if prop.fget else None,
                 'fset': prop.fset if prop.write else None,
             }
             setattr(
