@@ -1,4 +1,5 @@
 # autoqt
+[![PyPI](https://badge.fury.io/py/autoqt.svg)](https://badge.fury.io/py/autoqt)
 
 A simple single file module that makes setting up basic pyqtProperties a little
 bit nicer without restricting you.
