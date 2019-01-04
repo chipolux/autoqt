@@ -4,7 +4,7 @@ from functools import partial
 from PyQt5.QtCore import QObject, pyqtProperty
 
 
-VERSION = '0.0.4'
+VERSION = '0.0.5'
 
 
 def getdeepr(obj, name):
@@ -46,18 +46,23 @@ class AutoProp:
     You can use the @propName.getter and setter decorators just like you would
     with a Python or PyQt property to customize them if you need to.
 
+    fget and fset arguments work the same as on pyqtProperty as well.
+
     The attr argument can also contain a kind of 'object path' with
     levels/layers separated by dots. For example: attr='thing.other.stuff'
     will getattr down through the 'thing' and 'other' objects to return the
     value of 'stuff'.
     """
-    def __init__(self, type_signature, signal_name, attr=None, write=False):
+    def __init__(self, type_signature, signal_name, attr=None, write=False,
+                 fget=None, fset=None):
         self.type_signature = type_signature
         self.signal_name = signal_name
         self.attr = attr
         self.write = write
-        self.fget = partial(_getter, attr=self.attr)
-        self.fset = partial(_setter, attr=self.attr, signal=self.signal_name)
+        self.fget = fget or partial(_getter, attr=self.attr)
+        self.fset = fset or partial(
+            _setter, attr=self.attr, signal=self.signal_name
+        )
 
     def getter(self, func):
         self.fget = func
