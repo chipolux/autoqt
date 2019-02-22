@@ -4,7 +4,7 @@ from functools import partial
 try:
     from PySide2.QtCore import QObject, Property
     USING = 'PySide2'
-except ModuleNotFoundError:
+except Exception:
     from PyQt5.QtCore import QObject, pyqtProperty as Property
     USING = 'PyQt5'
 
@@ -33,11 +33,13 @@ def _getter(self, attr):
     return getdeepr(self, attr)
 
 
-def _setter(self, value, attr, signal):
+def _setter(self, value, attr, sig, typ):
     """Template for AutoProp fset function."""
+    if not isinstance(typ, str) and not isinstance(value, typ):
+        raise TypeError('{} is not {}'.format(value, typ))
     if getdeepr(self, attr) != value:
         setdeepr(self, attr, value)
-        getdeepr(self, signal).emit()
+        getdeepr(self, sig).emit()
 
 
 class AutoProp:
@@ -66,7 +68,7 @@ class AutoProp:
         self.write = write
         self.fget = fget or partial(_getter, attr=self.attr)
         self.fset = fset or partial(
-            _setter, attr=self.attr, signal=self.signal_name
+            _setter, attr=self.attr, sig=self.signal_name, typ=type_signature
         )
 
     def getter(self, func):
@@ -95,11 +97,11 @@ class AutoObject(QObject):
                 continue
             if not isinstance(prop, AutoProp):
                 continue
-            prop_kwargs = {
-                'notify': getdeepr(cls, prop.signal_name),
-                'fget': prop.fget if prop.fget else None,
-                'fset': prop.fset if prop.write else None,
-            }
+            prop_kwargs = {'notify': getdeepr(cls, prop.signal_name)}
+            if prop.fget:
+                prop_kwargs['fget'] = prop.fget
+            if prop.write:
+                prop_kwargs['fset'] = prop.fset
             setattr(
                 cls, attr, Property(prop.type_signature, **prop_kwargs)
             )
