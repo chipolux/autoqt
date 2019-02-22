@@ -1,10 +1,10 @@
 # autoqt
 [![PyPI](https://badge.fury.io/py/autoqt.svg)](https://badge.fury.io/py/autoqt)
 
-A simple single file module that makes setting up basic pyqtProperties a little
+A simple single file module that makes setting up basic Qt properties a little
 bit nicer without restricting you.
 
-This is mostly useful if you have QObjects with many readonly properties and a
+This is very useful if you have QObjects with many readonly properties and a
 few special setters or state modifying slots.
 
 Example:

@@ -21,13 +21,11 @@ setup(
         'License :: OSI Approved :: MIT License',
         'Topic :: Software Development',
     ],
-    keywords='PyQt,PyQt5,pyqtProperty',
+    keywords='PyQt,PyQt5,pyqtProperty,PySide2',
     author='NaKyle Wright',
     author_email='nakyle.wright@gmail.com',
     url='https://github.com/chipolux/autoqt/',
     py_modules=['autoqt'],
     python_requires='>=3.6',
-    install_requires=[
-        'PyQt5>=5.7.1',
-    ],
+    install_requires=[],
 )

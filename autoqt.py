@@ -1,10 +1,15 @@
 # -*- coding: utf_8 -*-
 from functools import partial
 
-from PyQt5.QtCore import QObject, pyqtProperty
+try:
+    from PySide2.QtCore import QObject, Property
+    USING = 'PySide2'
+except ModuleNotFoundError:
+    from PyQt5.QtCore import QObject, pyqtProperty as Property
+    USING = 'PyQt5'
 
 
-VERSION = '0.0.5'
+VERSION = '0.0.6'
 
 
 def getdeepr(obj, name):
@@ -37,16 +42,16 @@ def _setter(self, value, attr, signal):
 
 class AutoProp:
     """
-    Automatic pyqtProperty for AutoObject
+    Automatic property for AutoObject
     Generates fget and fset functions to simplify basic property access.
 
-    Use in place of pyqtProperty when you just need to read/write an instance
-    attribute without doing anything special.
+    Use in place of pyqtProperty or Property when you just need to read/write
+    an instance attribute without doing anything special.
 
     You can use the @propName.getter and setter decorators just like you would
     with a Python or PyQt property to customize them if you need to.
 
-    fget and fset arguments work the same as on pyqtProperty as well.
+    fget and fset arguments work the same as on pyqtProperty/Property as well.
 
     The attr argument can also contain a kind of 'object path' with
     levels/layers separated by dots. For example: attr='thing.other.stuff'
@@ -78,11 +83,11 @@ class AutoObject(QObject):
     """
     Automatic QObject
     A wrapper for QObject that uses the Python 3.6 __init_subclass__ method to
-    convert all AutoProp attributes into pyqtProperties.
+    convert all AutoProp attributes into Qt properties.
     """
     def __init_subclass__(cls, *args, **kwargs):
         super().__init_subclass__(**kwargs)
-        # transform AutoProp instances into pyqtProperties
+        # transform AutoProp instances into Qt properties
         for attr in dir(cls):
             try:
                 prop = getdeepr(cls, attr)
@@ -96,5 +101,5 @@ class AutoObject(QObject):
                 'fset': prop.fset if prop.write else None,
             }
             setattr(
-                cls, attr, pyqtProperty(prop.type_signature, **prop_kwargs)
+                cls, attr, Property(prop.type_signature, **prop_kwargs)
             )

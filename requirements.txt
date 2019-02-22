@@ -1,4 +1,6 @@
+PySide2>=5.12.1
 PyQt5>=5.7.1
 setuptools
 wheel
 twine
+green
