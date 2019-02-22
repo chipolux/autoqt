@@ -5,6 +5,9 @@ clean:
 	rm -rf __pycache__
 	rm -rf *.pyc
 
+test:
+	python -m unittest
+
 build: clean
 	python setup.py sdist bdist_wheel
 
