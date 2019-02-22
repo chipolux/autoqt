@@ -36,7 +36,7 @@ def _getter(self, attr):
 def _setter(self, value, attr, sig, typ):
     """Template for AutoProp fset function."""
     if not isinstance(typ, str) and not isinstance(value, typ):
-        raise TypeError('{} is not {}'.format(value, typ))
+        raise TypeError('{} is not {}'.format(repr(value), typ))
     if getdeepr(self, attr) != value:
         setdeepr(self, attr, value)
         getdeepr(self, sig).emit()
@@ -51,7 +51,7 @@ class AutoProp:
     an instance attribute without doing anything special.
 
     You can use the @propName.getter and setter decorators just like you would
-    with a Python or PyQt property to customize them if you need to.
+    with a Python or Qt property to override them if you need to.
 
     fget and fset arguments work the same as on pyqtProperty/Property as well.
 
@@ -65,7 +65,7 @@ class AutoProp:
         self.type_signature = type_signature
         self.signal_name = signal_name
         self.attr = attr
-        self.write = write
+        self.writable = write or fset is not None
         self.fget = fget or partial(_getter, attr=self.attr)
         self.fset = fset or partial(
             _setter, attr=self.attr, sig=self.signal_name, typ=type_signature
@@ -75,9 +75,18 @@ class AutoProp:
         self.fget = func
         return self
 
+    def read(self, func):
+        self.fget = func
+        return self
+
     def setter(self, func):
         self.fset = func
-        self.write = True
+        self.writable = True
+        return self
+
+    def write(self, func):
+        self.fset = func
+        self.writable = True
         return self
 
 
@@ -100,7 +109,7 @@ class AutoObject(QObject):
             prop_kwargs = {'notify': getdeepr(cls, prop.signal_name)}
             if prop.fget:
                 prop_kwargs['fget'] = prop.fget
-            if prop.write:
+            if prop.writable:
                 prop_kwargs['fset'] = prop.fset
             setattr(
                 cls, attr, Property(prop.type_signature, **prop_kwargs)

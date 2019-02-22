@@ -10,7 +10,7 @@ import autoqt
 
 
 class TestAutoQt:
-    def test_default_getter(self):
+    def test_default_getter_gets(self):
         """ensure default getter returns value"""
 
         class Obj(autoqt.AutoObject):
@@ -27,7 +27,7 @@ class TestAutoQt:
         self.assertEqual(obj.i, 10)
         self.assertEqual(obj.s, 'stuff')
 
-    def test_default_setter(self):
+    def test_default_setter_sets(self):
         """ensure default setter sets value"""
 
         class Obj(autoqt.AutoObject):
@@ -116,6 +116,85 @@ class TestAutoQt:
         obj = Obj()
         with self.assertRaises(AttributeError):
             obj.s
+
+    def test_uses_provided_fget(self):
+        """should use provided fget argument to get value"""
+        m = mock.Mock()
+
+        class Obj(autoqt.AutoObject):
+            signal = self.sig()
+            s = autoqt.AutoProp(str, 'signal', fget=m)
+
+        obj = Obj()
+        obj.s
+        m.assert_called_once_with(obj)
+        self.assertIs(obj.s, m())
+
+    def test_uses_provided_fset(self):
+        """should use provided fset argument to set value"""
+        m = mock.Mock()
+
+        class Obj(autoqt.AutoObject):
+            signal = self.sig()
+            s = autoqt.AutoProp(str, 'signal', fset=m)
+
+        obj = Obj()
+        obj.s = 'thing'
+        m.assert_called_once_with(obj, 'thing')
+
+    def test_getter_decorator(self):
+        """should allow custom getter decorator"""
+        class Obj(autoqt.AutoObject):
+            signal = self.sig()
+            s = autoqt.AutoProp(str, 'signal')
+
+            @s.getter
+            def s(self):
+                return 'things'
+
+        obj = Obj()
+        self.assertEqual(obj.s, 'things')
+
+    def test_read_decorator(self):
+        """should allow custom read decorator"""
+        class Obj(autoqt.AutoObject):
+            signal = self.sig()
+            s = autoqt.AutoProp(str, 'signal')
+
+            @s.read
+            def s(self):
+                return 'stuff'
+
+        obj = Obj()
+        self.assertEqual(obj.s, 'stuff')
+
+    def test_setter_decorator(self):
+        """should allow custom setter decorator"""
+        class Obj(autoqt.AutoObject):
+            signal = self.sig()
+            s = autoqt.AutoProp(str, 'signal')
+
+            @s.setter
+            def s(self, value):
+                self._s = value
+
+        obj = Obj()
+        obj.s = 'other'
+        self.assertEqual(obj._s, 'other')
+
+    def test_write_decorator(self):
+        """should allow custom write decorator"""
+        class Obj(autoqt.AutoObject):
+            signal = self.sig()
+            s = autoqt.AutoProp(str, 'signal')
+
+            @s.write
+            def s(self, value):
+                self._s = value
+
+        obj = Obj()
+        obj.s = 'stuff'
+        self.assertEqual(obj._s, 'stuff')
 
 
 class TestPyQt(unittest.TestCase, TestAutoQt):
